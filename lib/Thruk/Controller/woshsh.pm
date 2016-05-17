@@ -23,6 +23,7 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::WriteExcel;
 use File::Temp qw/tempfile/;
 use File::Copy qw/move/;
+use Carp qw/confess/;
 use Thruk::Utils::IO;
 
 ##########################################################
@@ -113,7 +114,7 @@ sub _read_data_file {
     }
 
     return($data) if $data;
-    die("no such file / worksheet");
+    confess("no such file / worksheet");
 }
 
 ##########################################################
@@ -124,8 +125,8 @@ sub _parse_excel_file {
     my $data   = [];
 
     my $workbook = $parser->parse($file);
-    if ( !defined $workbook ) {
-        die $parser->error(), ".\n";
+    if(!defined $workbook) {
+        confess($file.': '.$parser->error());
     }
     for my $worksheet ( $workbook->worksheets() ) {
         my $worksheet_data = {
@@ -142,7 +143,7 @@ sub _parse_excel_file {
             for my $col ( $col_min .. $col_max ) {
                 my $cell = $worksheet->get_cell( $row, $col );
                 next unless $cell;
-                $row_data->{chr($col+65)} = $cell->unformatted();
+                $row_data->{chr($col+65)} = $cell->value();
             }
             push @{$worksheet_data->{'data'}}, $row_data;
         }
@@ -164,7 +165,7 @@ sub _get_worksheet {
             return($worksheet);
         }
     }
-    die("no such file / worksheet");
+    confess("no such file / worksheet");
 }
 
 ##########################################################
