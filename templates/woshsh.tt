@@ -128,6 +128,21 @@ function worksheetTab(id, worksheet) {
                     col['listeners'] = {
                         change: function() {
                             scheduleUpdate('[% selected_file %]', worksheet, store);
+                        },
+                        keydown: function(This, td, rowIndex, cellIndex, evt, record, tr) {
+                            var key = evt.getKey();
+                            /* normal charactes, begin editing */
+                            if(key >= 65 && key <= 90) {
+                                This.editingPlugin.startEdit(record, cellIndex);
+                            }
+                        },
+                        keyup: function(This, td, rowIndex, cellIndex, evt, record, tr) {
+                            /* empty cell on backspace and delete */
+                            var key = evt.getKey();
+                            if(key == evt.BACKSPACE || key == evt.DELETE) {
+                                var cellName = record.getFields()[cellIndex-1].name;
+                                record.set(cellName, "");
+                            }
                         }
                     };
                 });
