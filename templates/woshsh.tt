@@ -1,0 +1,239 @@
+﻿[% USE date %]
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <script type="text/javascript">
+    <!--
+        var url_prefix = '[% url_prefix %]';
+    -->
+    </script>
+    <title>[% title_prefix %][% title %]</title>
+    <link rel="shortcut icon" href="[% url_prefix %]themes/[% theme %]/images/favicon.ico" type="image/ico" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="[% url_prefix %]plugins/woshsh/ext-[% extjs_version %]/build/classic/theme-crisp/resources/theme-crisp-all.css">
+    <link rel='stylesheet' type='text/css' href='[% url_prefix %]plugins/woshsh/woshsh.css' />
+    [% IF thruk_debug %]
+      <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
+    [% ELSE %]
+      <!--[IF IE]>
+        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
+      <![ENDIF]-->
+      <!--[IF !IE]> -->
+        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/ext-[% extjs_version %]/build/ext-all.js"></script>
+      <!-- <![ENDIF]-->
+    [% END %]
+</head>
+<body>
+<script type="text/javascript">
+
+Ext.BLANK_IMAGE_URL = url_prefix+'plugins/panorama/images/s.gif';
+
+Ext.define('WoshshCellcomboEditor', {
+    extend: 'Ext.form.field.ComboBox',
+
+    alias:  'widget.woshsh_cellcombo_editor',
+
+    queryMode:      'local',
+    valueField:     'name',
+    displayField:   'value',
+    triggerAction:  'all',
+    typeAhead:       true,
+    matchFieldWidth: false,
+    store:      { fields: ['name', 'value'], data: [] },
+    listeners: {
+        focus: function(This, evt, eOpts) {
+            /* collect uniq entries for given column and show them in a combobox */
+            var store   = This.ownerCt.context.record.store;
+            var colIdx  = This.ownerCt.context.colIdx;
+            var colName = This.ownerCt.context.record.fields[colIdx-1].name;
+            var x       = 0;
+            var uniq    = {};
+            store.data.each(function(rec) {
+                x++;
+                if(x > 1) {
+                    uniq[rec.get(colName)] = true;
+                }
+            });
+            var data = [];
+            Ext.Array.each(Ext.Array.sort(Ext.Object.getKeys(uniq)), function(val, i) {
+                if(val != undefined && val != "") {
+                    data.push({ name: val, value: val });
+                }
+            });
+            This.store.loadData(data);
+            This.expand();
+        },
+        select: function(c, r, eopts) {
+            c.ownerCt.completeEdit();
+        }
+    }
+});
+
+var timeouts = {};
+function scheduleUpdate(file, worksheet, store) {
+    if(timeouts[file+"_"+worksheet]) {
+        window.clearTimeout(timeouts[file+"_"+worksheet]);
+    }
+    timeouts[file+"_"+worksheet] = window.setTimeout(function() {
+        sendUpdates(file, worksheet, store);
+        delete timeouts[file+"_"+worksheet];
+    }, 1000);
+}
+
+function sendUpdates(file, worksheet, store) {
+    console.log(store.getModifiedRecords());
+    /*
+    Ext.Ajax.request({
+        url:      'woshsh.cgi',
+        method:  'POST',
+        params:    {
+            save:  1,
+            file:  file,
+            name:  worksheet,
+            col:   editor.context.colIdx,
+            row:   editor.context.rowIdx,
+            value: el.value
+        },
+        callback: function(options, success, response) {
+            if(success) {
+                el.record.commit();
+            }
+        }
+    });
+    */
+}
+
+
+function worksheetTab(id, worksheet) {
+    var gridStore = Ext.create('Ext.data.Store', {
+        autoLoad: id == 'tab_0' ? true : false,
+        fields: [],
+        proxy: {
+            type: 'ajax',
+            url:  'woshsh.cgi?load=1&file=[% selected_file %]&name='+worksheet,
+            reader: {
+                type: 'json',
+                rootProperty: 'data'
+            }
+        },
+        listeners: {
+            metachange: function(store, meta) {
+                Ext.Array.each(meta.columns, function(col, i) {
+                    col['editor']    = 'woshsh_cellcombo_editor';
+                    col['listeners'] = {
+                        change: function() {
+                            scheduleUpdate('[% selected_file %]', worksheet, store);
+                        }
+                    };
+                });
+                Ext.getCmp(id).reconfigure(store, meta.columns);
+            }
+        }
+    });
+
+    var tab = {
+        title:      worksheet,
+        xtype:      'gridpanel',
+        columns:     [],
+        id:         id,
+        store:       gridStore,
+        selModel:  { type: 'spreadsheet' },
+        columnLines: true,
+        plugins: [
+            "clipboard",
+            {
+                ptype: 'cellediting',
+                clicksToEdit: 2
+            }
+        ],
+        listeners: {
+            activate: function(This, eOpts) {
+                if(!gridStore.isLoaded()) {
+                    gridStore.load();
+                }
+            },
+            edit: function(editor, el) {
+                if(el.value != el.originalValue) {
+                    scheduleUpdate('[% selected_file %]', worksheet, gridStore);
+                }
+            }
+        }
+    }
+    return(tab);
+}
+
+Ext.onReady(function() {
+    Ext.QuickTips.init();
+
+    /* main viewport */
+    var viewport = new Ext.Viewport({
+        id:       'viewport',
+        layout:   'border',
+        renderTo: Ext.getBody(),
+        margins:  '0 0 0 0',
+        items:    [{
+            header:      false,
+            title:      "data editor",
+            xtype:      "tabpanel",
+            region:     "center",
+            id:         "tabpanel",
+            minTabWidth: 80,
+            tools: [{
+                type:'refresh',
+                tooltip: 'Refresh form Data',
+                handler: function(event, toolEl, panelHeader) {
+                }
+            }],
+            items: [
+                [% FOREACH w = worksheets %]
+                worksheetTab("tab_[% loop.index %]", "[% w %]")[% UNLESS loop.last %],[% END %]
+                [% END %]
+            ],
+            tabBar: {
+                items: [{
+                    xtype: 'tbfill'
+                }, {
+                    xtype:      'combobox',
+                    name:       'file',
+                    value:      '[% selected_file %]',
+                    width:       140,
+                    store:      [
+                        [% FOREACH f = files %]
+                        ["[% f.replace('^[.*]/', '') %]", "[% f %]"][% UNLESS loop.last %],[% END %]
+                        [% END %]
+                    ],
+                    editable: false,
+                    margin: '0 10 0 0',
+                    matchFieldWidth: false,
+                    listeners: {
+                        change: function(This, newValue, oldValue, eOpts) {
+                            window.location = 'woshsh.cgi?file='+newValue;
+                        }
+                    }
+                }, {
+                    xtype: 'tool',
+                    type:  'refresh',
+                    callback: function(tabbar, tool, event) {
+                        Ext.getCmp("tabpanel").getActiveTab().getStore().reload();
+                    }
+                }]
+            }
+        }]
+    });
+
+    /* disable backspace on body to prevent accidentally leaving the page */
+    Ext.get(document).on('keydown', function(evt, t) {
+        if(evt.getKey() == evt.BACKSPACE && evt.target) {
+            if(evt.target.tagName.toLowerCase() != "input" && evt.target.tagName.toLowerCase() != "textarea") {
+                evt.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+
+-->
+</script>
+</body>
+</html>

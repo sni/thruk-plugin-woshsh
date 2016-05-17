@@ -1,0 +1,18 @@
+##########################################################
+
+=head2 add_routes
+
+page: /thruk/cgi-bin/woshsh.cgi
+
+=cut
+
+$routes->{'/thruk/cgi-bin/woshsh.cgi'} = 'Thruk::Controller::woshsh::index';
+
+# add new menu item
+Thruk::Utils::Menu::insert_item('System', {
+                                'href'  => '/thruk/cgi-bin/woshsh.cgi',
+                                'name'  => 'Woshsh',
+});
+
+# enable woshsh features if this plugin is loaded
+$app->config->{'use_feature_woshsh'} = 1;
