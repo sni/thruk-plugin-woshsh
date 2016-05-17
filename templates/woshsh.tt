@@ -82,26 +82,30 @@ function scheduleUpdate(file, worksheet, store) {
 }
 
 function sendUpdates(file, worksheet, store) {
-    console.log(store.getModifiedRecords());
-    /*
+    var values  = [];
+    var records = store.getModifiedRecords();
+    Ext.Array.each(records, function(record, i) {
+        var store      = record.store;
+        var storeIndex = store.indexOf(record);
+        values.push({row: storeIndex, data: record.data});
+    });
     Ext.Ajax.request({
         url:      'woshsh.cgi',
         method:  'POST',
         params:    {
-            save:  1,
-            file:  file,
-            name:  worksheet,
-            col:   editor.context.colIdx,
-            row:   editor.context.rowIdx,
-            value: el.value
+            save:   1,
+            file:   file,
+            name:   worksheet,
+            values: Ext.JSON.encode(values)
         },
         callback: function(options, success, response) {
             if(success) {
-                el.record.commit();
+                Ext.Array.each(records, function(record, i) {
+                    record.commit();
+                });
             }
         }
     });
-    */
 }
 
 
@@ -162,7 +166,7 @@ function worksheetTab(id, worksheet) {
                     listeners: {
                         beforeshow: function updateTipBody(tip) {
                             var val = tip.triggerElement.firstChild.innerHTML;
-                            if(val == "" || val == "&nbsp;") { return(false); }
+                            if(val == "" || val == "&nbsp;" || val.match('cellcombo_editor')) { return(false); }
                             tip.update(tip.triggerElement.firstChild.innerHTML);
                         }
                     }

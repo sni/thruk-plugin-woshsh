@@ -24,6 +24,7 @@ use Spreadsheet::WriteExcel;
 use File::Temp qw/tempfile/;
 use File::Copy qw/move/;
 use Carp qw/confess/;
+use JSON::XS qw/decode_json/;
 use Thruk::Utils::IO;
 
 ##########################################################
@@ -53,11 +54,12 @@ sub index {
     if(defined $c->req->parameters->{'save'}) {
         my $excel_data = _read_data_file($c, $c->stash->{'selected_file'});
         my $worksheet  = _get_worksheet($excel_data, $c->req->parameters->{'name'});
-        my $row = $c->req->parameters->{row};
-        my $col = $c->req->parameters->{col} -1;
-        my $val = $c->req->parameters->{value};
-        my $idx = $worksheet->[1]->{'metaData'}->{'columns'}->[$col]->{'dataIndex'};
-        $worksheet->[1]->{'data'}->[$row]->{$idx} = $val;
+        my $val = decode_json($c->req->parameters->{values});
+        for my $v (@{$val}) {
+            my $row = $v->{'row'};
+            delete $v->{'data'}->{'id'};
+            $worksheet->[1]->{'data'}->[$row] = $v->{'data'};
+        }
 
         # save excel file
         my($fh, $tempfile) = tempfile();
