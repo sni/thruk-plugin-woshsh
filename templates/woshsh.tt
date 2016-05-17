@@ -152,6 +152,21 @@ function worksheetTab(id, worksheet) {
                 if(!gridStore.isLoaded()) {
                     gridStore.load();
                 }
+                /* add tooltip for each cell */
+                var view = This.getView();
+                var tip = Ext.create('Ext.tip.ToolTip', {
+                    target: view.el,
+                    delegate: ".x-grid-td",
+                    trackMouse: true,
+                    renderTo: Ext.getBody(),
+                    listeners: {
+                        beforeshow: function updateTipBody(tip) {
+                            var val = tip.triggerElement.firstChild.innerHTML;
+                            if(val == "" || val == "&nbsp;") { return(false); }
+                            tip.update(tip.triggerElement.firstChild.innerHTML);
+                        }
+                    }
+                });
             },
             edit: function(editor, el) {
                 if(el.value != el.originalValue) {
@@ -197,10 +212,10 @@ Ext.onReady(function() {
                     xtype:      'combobox',
                     name:       'file',
                     value:      '[% selected_file %]',
-                    width:       140,
+                    width:       120,
                     store:      [
                         [% FOREACH f = files %]
-                        ["[% f.replace('^[.*]/', '') %]", "[% f %]"][% UNLESS loop.last %],[% END %]
+                        ["[% f %]", "[% f.replace('^.*/', '') %]"][% UNLESS loop.last %],[% END %]
                         [% END %]
                     ],
                     editable: false,
