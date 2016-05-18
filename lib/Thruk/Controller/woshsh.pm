@@ -54,12 +54,29 @@ sub index {
     if(defined $c->req->parameters->{'save'}) {
         my $excel_data = _read_data_file($c, $c->stash->{'selected_file'});
         my $worksheet  = _get_worksheet($excel_data, $c->req->parameters->{'name'});
-        my $val = decode_json($c->req->parameters->{values});
+        my $val        = decode_json($c->req->parameters->{values});
+        my $removed    = Thruk::Config::array2hash(decode_json($c->req->parameters->{removed}));
         for my $v (@{$val}) {
             my $row = $v->{'row'};
             delete $v->{'data'}->{'id'};
             $worksheet->[1]->{'data'}->[$row] = $v->{'data'};
         }
+
+        if(scalar keys %{$removed} > 0) {
+            for my $s (@{$excel_data}) {
+                next unless $s->[0] eq $c->req->parameters->{'name'};
+                my @to_remove = sort {$b <=> $a} keys %{$removed};
+                my @data = @{$s->[1]->{'data'}};
+                my $next = shift @to_remove;
+                for(my $i = scalar @data -1; $i >= 0; $i--) {
+                    if(defined $next && $i == $next) {
+                        splice(@{$s->[1]->{'data'}}, $i, 1);
+                        $next = shift @to_remove;
+                    }
+                }
+            }
+        }
+
 
         # save excel file
         my($fh, $tempfile) = tempfile();
@@ -133,7 +150,7 @@ sub _parse_excel_file {
     for my $worksheet ( $workbook->worksheets() ) {
         my $worksheet_data = {
             metaData => {
-                fields  => [],
+                fields  => [header => "_row", dataIndex => "_row"],
                 columns => [],
             },
             data    => [],
@@ -141,7 +158,7 @@ sub _parse_excel_file {
         my ( $row_min, $row_max ) = $worksheet->row_range();
         my ( $col_min, $col_max ) = $worksheet->col_range();
         for my $row ($row_min .. $row_max) {
-            my $row_data = {};
+            my $row_data = {"_row" => $row};
             for my $col ( $col_min .. $col_max ) {
                 my $cell = $worksheet->get_cell( $row, $col );
                 next unless $cell;

@@ -83,26 +83,32 @@ function scheduleUpdate(file, worksheet, store) {
 
 function sendUpdates(file, worksheet, store) {
     var values  = [];
+    var deleted = [];
     var records = store.getModifiedRecords();
+    var removed = store.getRemovedRecords();
     Ext.Array.each(records, function(record, i) {
-        var store      = record.store;
         var storeIndex = store.indexOf(record);
         values.push({row: storeIndex, data: record.data});
+    });
+    Ext.Array.each(removed, function(record, i) {
+        deleted.push(record.data["_row"]);
     });
     Ext.Ajax.request({
         url:      'woshsh.cgi',
         method:  'POST',
         params:    {
-            save:   1,
-            file:   file,
-            name:   worksheet,
-            values: Ext.JSON.encode(values)
+            save:    1,
+            file:    file,
+            name:    worksheet,
+            values:  Ext.JSON.encode(values),
+            removed: Ext.JSON.encode(deleted)
         },
         callback: function(options, success, response) {
             if(success) {
                 Ext.Array.each(records, function(record, i) {
                     record.commit();
                 });
+                store.commitChanges();
             }
         }
     });
@@ -128,21 +134,6 @@ function worksheetTab(id, worksheet) {
                     col['listeners'] = {
                         change: function() {
                             scheduleUpdate('[% selected_file %]', worksheet, store);
-                        },
-                        keydown: function(This, td, rowIndex, cellIndex, evt, record, tr) {
-                            var key = evt.getKey();
-                            /* normal charactes, begin editing */
-                            if(key >= 65 && key <= 90) {
-                                This.editingPlugin.startEdit(record, cellIndex);
-                            }
-                        },
-                        keyup: function(This, td, rowIndex, cellIndex, evt, record, tr) {
-                            /* empty cell on backspace and delete */
-                            var key = evt.getKey();
-                            if(key == evt.BACKSPACE || key == evt.DELETE) {
-                                var cellName = record.getFields()[cellIndex-1].name;
-                                record.set(cellName, "");
-                            }
                         }
                     };
                 });
@@ -152,13 +143,16 @@ function worksheetTab(id, worksheet) {
     });
 
     var tab = {
-        title:      worksheet,
-        xtype:      'gridpanel',
-        columns:     [],
-        id:         id,
-        store:       gridStore,
-        selModel:  { type: 'spreadsheet' },
-        columnLines: true,
+        title:            worksheet,
+        xtype:           'gridpanel',
+        columns:          [],
+        id:               id,
+        store:            gridStore,
+        selModel:       { type: 'spreadsheet' },
+        columnLines:      true,
+        sortableColumns:  false,
+        enableColumnHide: false,
+        enableColumnMove: false,
         plugins: [
             "clipboard",
             {
@@ -189,6 +183,31 @@ function worksheetTab(id, worksheet) {
             },
             edit: function(editor, el) {
                 if(el.value != el.originalValue) {
+                    scheduleUpdate('[% selected_file %]', worksheet, gridStore);
+                }
+            },
+            cellkeydown: function(This, td, cellIndex, record, tr, rowIndex, evt, eOpts) {
+                if(cellIndex == 0) { return(true); }
+                var key = evt.getKey();
+                /* normal charactes, begin editing */
+                if(rowIndex > 0 && cellIndex > 0 && (key >= 65 && key <= 90)) {
+                    This.editingPlugin.startEdit(record, cellIndex);
+                }
+                /* empty cell on backspace and delete */
+                if(rowIndex > 0 && (key == evt.BACKSPACE || key == evt.DELETE)) {
+                    if(cellIndex == 0) {
+                    } else {
+                        var cellName = record.getFields()[cellIndex-1].name;
+                        record.set(cellName, "");
+                        scheduleUpdate('[% selected_file %]', worksheet, gridStore);
+                    }
+                }
+            },
+            rowkeydown: function(This, record, tr, rowIndex, evt, eOpts) {
+                var key = evt.getKey();
+                if(!This.getSelectionModel().selected.isRows) { return(true); }
+                if(rowIndex > 0 && (key == evt.BACKSPACE || key == evt.DELETE)) {
+                    gridStore.remove(record);
                     scheduleUpdate('[% selected_file %]', worksheet, gridStore);
                 }
             }
