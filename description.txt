@@ -1,3 +1,4 @@
 The 'Woshsh' plugin edits excel files online.
 
 Url: woshsh.cgi
+Version: 1.0.0
