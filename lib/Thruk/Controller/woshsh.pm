@@ -51,6 +51,11 @@ sub index {
     $c->stash->{'files'} = $files;
     $c->stash->{'selected_file'} = $c->req->parameters->{'file'} || $files->[0];
 
+    if(!$files || scalar @{$files} == 0) {
+        $c->error("plugin requires input_files, see https://github.com/sni/thruk-plugin-woshsh for instructions.");
+        return;
+    }
+
     if(defined $c->req->parameters->{'save'}) {
         my $excel_data = _read_data_file($c, $c->stash->{'selected_file'});
         my $worksheet  = _get_worksheet($excel_data, $c->req->parameters->{'name'});
