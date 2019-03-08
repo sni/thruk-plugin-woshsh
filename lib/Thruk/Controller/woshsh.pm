@@ -24,7 +24,7 @@ use Spreadsheet::WriteExcel;
 use File::Temp qw/tempfile/;
 use File::Copy qw/move/;
 use Carp qw/confess/;
-use JSON::XS qw/decode_json/;
+use Cpanel::JSON::XS qw/decode_json/;
 use Thruk::Utils::IO;
 
 ##########################################################
