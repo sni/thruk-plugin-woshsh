@@ -8,7 +8,7 @@ Assuming you are using OMD (omdistro.org).
 All steps have to be done as site user:
 
     %> cd etc/thruk/plugins-enabled/
-    %> git clone https://github.com/sni/thruk-plugin-woshsh.git omd
+    %> git clone https://github.com/sni/thruk-plugin-woshsh.git woshsh
     %> omd reload apache
 
 You now have a new menu item under System -> Woshsh.
