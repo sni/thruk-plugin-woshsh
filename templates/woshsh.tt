@@ -45,7 +45,7 @@ Ext.define('WoshshCellcomboEditor', {
             /* collect uniq entries for given column and show them in a combobox */
             var store   = This.ownerCt.context.record.store;
             var colIdx  = This.ownerCt.context.colIdx;
-            var colName = This.ownerCt.context.record.fields[colIdx-1].name;
+            var colName = This.ownerCt.context.column.dataIndex;
             var x       = 0;
             var uniq    = {};
             store.data.each(function(rec) {
@@ -92,6 +92,7 @@ function sendUpdates(file, worksheet, store) {
     Ext.Array.each(removed, function(record, i) {
         deleted.push(record.data["_row"]);
     });
+    if(deleted.length == 0 && values.length == 0) { return; }
     Ext.Ajax.request({
         url:      'woshsh.cgi',
         method:  'POST',
@@ -188,16 +189,23 @@ function worksheetTab(id, worksheet) {
             cellkeydown: function(This, td, cellIndex, record, tr, rowIndex, evt, eOpts) {
                 if(cellIndex == 0) { return(true); }
                 var key = evt.getKey();
-                /* normal charactes, begin editing */
+                /* normal characters, begin editing */
                 if(rowIndex > 0 && cellIndex > 0 && (key >= 65 && key <= 90)) {
                     This.editingPlugin.startEdit(record, cellIndex);
                 }
                 /* empty cell on backspace and delete */
                 if(rowIndex > 0 && (key == evt.BACKSPACE || key == evt.DELETE)) {
-                    if(cellIndex == 0) {
-                    } else {
-                        var cellName = record.getFields()[cellIndex-1].name;
-                        record.set(cellName, "");
+                    var sel = This.ownerGrid.getSelectionModel().selected;
+                    if(sel.startCell && sel.endCell) {
+                        var header = This.ownerGrid.getHeaderContainer();
+                        var store  = This.ownerGrid.store;
+                        for(var row = sel.startCell.rowIdx; row <= sel.endCell.rowIdx; row++) {
+                            for(var col = sel.startCell.colIdx; col <= sel.endCell.colIdx; col++) {
+                                var cellName = header.getHeaderAtIndex(col).dataIndex
+                                var record   = store.getAt(row);
+                                record.set(cellName, "");
+                            }
+                        }
                         scheduleUpdate('[% selected_file %]', worksheet, gridStore);
                     }
                 }
