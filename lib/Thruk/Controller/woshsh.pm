@@ -52,7 +52,9 @@ sub index {
     $c->stash->{'selected_file'} = $c->req->parameters->{'file'} || $files->[0];
 
     if(!$files || scalar @{$files} == 0) {
-        $c->error("plugin requires input_files, see https://github.com/sni/thruk-plugin-woshsh for instructions.");
+        $c->stash->{errorMessage}       = "no <b>input_files</b> defined.";
+        $c->stash->{errorDescription}   = "plugin requires input_files, see <a href='https://github.com/sni/thruk-plugin-woshsh'>README</a> for setup instructions.";
+        return $c->detach('/error/index/99');
         return;
     }
 
