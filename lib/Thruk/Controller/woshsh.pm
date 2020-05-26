@@ -131,11 +131,11 @@ sub _read_data_file {
     } else {
         my @stat1 = stat($file);
         my @stat2 = stat($cache_file);
-        if($stat1[9] > $stat2[9]) {
+        if($stat1[9] && $stat1[9] < $stat2[9]) {
+            $data = Thruk::Utils::IO::json_lock_retrieve($cache_file);
+        } else {
             $data = _parse_excel_file($c, $file);
             Thruk::Utils::IO::json_lock_store($cache_file, $data);
-        } else {
-            $data = Thruk::Utils::IO::json_lock_retrieve($cache_file);
         }
     }
 
@@ -149,6 +149,28 @@ sub _parse_excel_file {
 
     my $parser = Spreadsheet::ParseExcel->new();
     my $data   = [];
+
+    # return empty file unless file exists
+    if(!-f $file) {
+        my $worksheet_data = {
+            metaData => {
+                fields  => [header => "_row", dataIndex => "_row"],
+                columns => [],
+            },
+            data    => [],
+        };
+        my($row_min, $row_max) = (1, 100);
+        for my $row ($row_min .. $row_max) {
+            my $row_data = {"_row" => $row};
+            push @{$worksheet_data->{'data'}}, $row_data;
+        }
+        for my $x (65..90) {
+            push @{$worksheet_data->{'metaData'}->{'columns'}}, { header => chr($x), dataIndex => chr($x) };
+            push @{$worksheet_data->{'metaData'}->{'fields'}},  { name   => chr($x), type      => "string" };
+        }
+        push @{$data}, [ "worksheet", $worksheet_data ];
+        return($data);
+    }
 
     my $workbook = $parser->parse($file);
     if(!defined $workbook) {
@@ -164,6 +186,7 @@ sub _parse_excel_file {
         };
         my ( $row_min, $row_max ) = $worksheet->row_range();
         my ( $col_min, $col_max ) = $worksheet->col_range();
+        $row_max += 30;
         for my $row ($row_min .. $row_max) {
             my $row_data = {"_row" => $row};
             for my $col ( $col_min .. $col_max ) {
