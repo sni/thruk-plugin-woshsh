@@ -47,15 +47,14 @@ sub index {
         $c->stash->{'is_admin'} = 1;
     }
 
-    my $files = Thruk::Utils::list($c->config->{'Thruk::Plugin::woshsh'}->{'input_file'});
+    my $files = ref $c->config->{'Thruk::Plugin::woshsh'} eq 'HASH' ? Thruk::Utils::list($c->config->{'Thruk::Plugin::woshsh'}->{'input_file'}) : [];
     $c->stash->{'files'} = $files;
     $c->stash->{'selected_file'} = $c->req->parameters->{'file'} || $files->[0];
 
     if(!$files || scalar @{$files} == 0) {
         $c->stash->{errorMessage}       = "no <b>input_files</b> defined.";
         $c->stash->{errorDescription}   = "plugin requires input_files, see <a href='https://github.com/sni/thruk-plugin-woshsh'>README</a> for setup instructions.";
-        return $c->detach('/error/index/99');
-        return;
+        return($c->detach('/error/index/99'));
     }
 
     if(defined $c->req->parameters->{'save'}) {
