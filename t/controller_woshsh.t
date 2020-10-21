@@ -3,21 +3,19 @@ use warnings;
 use Test::More;
 
 BEGIN {
-    plan skip_all => 'backends required' if(!-s 'thruk_local.conf' and !defined $ENV{'PLACK_TEST_EXTERNALSERVER_URI'});
-    plan tests => 13;
-}
-
-BEGIN {
     use lib('t');
     require TestUtils;
     import TestUtils;
 }
 
-SKIP: {
-    skip 'external tests', 1 if defined $ENV{'PLACK_TEST_EXTERNALSERVER_URI'};
+plan skip_all => 'internal test' if $ENV{'PLACK_TEST_EXTERNALSERVER_URI'};
+plan skip_all => 'backends required' if !-s 'thruk_local.conf';
+plan tests => 13;
 
-    use_ok 'Thruk::Controller::woshsh';
-};
+###########################################################
+# test modules
+unshift @INC, 'plugins/plugins-available/woshsh/lib';
+use_ok 'Thruk::Controller::woshsh';
 
 #################################################
 my $pages = [
