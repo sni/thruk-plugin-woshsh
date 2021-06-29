@@ -1,7 +1,9 @@
 package Thruk::Controller::woshsh;
 
-use strict;
 use warnings;
+use strict;
+
+use Thruk::Config 'noautoload';
 
 =head1 NAME
 
@@ -19,13 +21,15 @@ BEGIN {
     #use Thruk::Timer qw/timing_breakpoint/;
 }
 
-use Spreadsheet::ParseExcel;
-use Spreadsheet::WriteExcel;
-use File::Temp qw/tempfile/;
-use File::Copy qw/move/;
 use Carp qw/confess/;
 use Cpanel::JSON::XS qw/decode_json/;
-use Thruk::Utils::IO;
+use File::Copy qw/move/;
+use File::Temp qw/tempfile/;
+use Spreadsheet::ParseExcel;
+use Spreadsheet::WriteExcel;
+
+use Thruk ();
+use Thruk::Utils ();
 
 ##########################################################
 
