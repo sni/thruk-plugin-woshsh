@@ -27,3 +27,12 @@ For example:
 
 You have to reload the apache to activate changes
 from the `thruk_local.conf`.
+
+The plugin has no permission handling itself, but you could wrap the
+configuration into Group tags like:
+
+    <Group Admins>
+      <Component Thruk::Plugin::woshsh>
+        input_file       = etc/coshsh/data/CMDB1.xls
+      </Component>
+    </Group>
