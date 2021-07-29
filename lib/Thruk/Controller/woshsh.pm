@@ -65,7 +65,7 @@ sub index {
         my $excel_data = _read_data_file($c, $c->stash->{'selected_file'});
         my $worksheet  = _get_worksheet($excel_data, $c->req->parameters->{'name'});
         my $val        = decode_json($c->req->parameters->{values});
-        my $removed    = Thruk::Config::array2hash(decode_json($c->req->parameters->{removed}));
+        my $removed    = Thruk::Base::array2hash(decode_json($c->req->parameters->{removed}));
         for my $v (@{$val}) {
             my $row = $v->{'row'};
             delete $v->{'data'}->{'id'};
