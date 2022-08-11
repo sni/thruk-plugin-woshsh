@@ -45,6 +45,7 @@ sub index {
     $c->stash->{readonly}        = 0;
     $c->stash->{title}           = 'Woshsh';
     $c->stash->{'extjs_version'} = "6.0.1";
+    $c->stash->{'plugin_name'}   = Thruk::Utils::get_plugin_name(__FILE__, __PACKAGE__);
 
     $c->stash->{'is_admin'} = 0;
     if($c->check_user_roles('authorized_for_system_commands') && $c->check_user_roles('authorized_for_configuration_information')) {

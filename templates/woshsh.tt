@@ -11,22 +11,22 @@
     <link rel="shortcut icon" href="[% url_prefix %]themes/[% theme %]/images/favicon.ico" type="image/ico" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <link rel="stylesheet" type="text/css" href="[% url_prefix %]plugins/woshsh/vendor/ext-[% extjs_version %]/build/classic/theme-crisp/resources/theme-crisp-all.css">
+    <link rel="stylesheet" type="text/css" href="[% url_prefix %]plugins/[% plugin_name %]/vendor/ext-[% extjs_version %]/build/classic/theme-crisp/resources/theme-crisp-all.css">
     [% IF thruk_author %]
-      <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/vendor/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
+      <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/[% plugin_name %]/vendor/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
     [% ELSE %]
       <!--[IF IE]>
-        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/vendor/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
+        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/[% plugin_name %]/vendor/ext-[% extjs_version %]/build/ext-all-debug.js"></script>
       <![ENDIF]-->
       <!--[IF !IE]> -->
-        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/woshsh/vendor/ext-[% extjs_version %]/build/ext-all.js"></script>
+        <script type="text/javascript" charset="UTF-8" src="[% url_prefix %]plugins/[% plugin_name %]/vendor/ext-[% extjs_version %]/build/ext-all.js"></script>
       <!-- <![ENDIF]-->
     [% END %]
 </head>
 <body>
 <script type="text/javascript">
 
-Ext.BLANK_IMAGE_URL = url_prefix+'plugins/panorama/images/s.gif';
+Ext.BLANK_IMAGE_URL = url_prefix+'plugins/[% plugin_name %]/images/s.gif';
 
 Ext.define('WoshshCellcomboEditor', {
     extend: 'Ext.form.field.ComboBox',
