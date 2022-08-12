@@ -2,6 +2,8 @@
 
 This plugin allows you to edit excel files.
 
+![Thruk Woshsh Plugin](preview.png "Thruk Woshsh Plugin")
+
 ## Installation
 
 Assuming you are using OMD (omdistro.org).
